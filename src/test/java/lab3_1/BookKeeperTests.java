@@ -3,6 +3,7 @@ package lab3_1;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -77,19 +78,24 @@ public class BookKeeperTests {
         int quantity = 20;
         Money totalCost = productData.getPrice()
                                      .multiplyBy(quantity);
-        RequestItem item = new RequestItem(productData, quantity, totalCost);
-        invoiceRequest.add(item);
+        RequestItem item1 = new RequestItem(productData, quantity, totalCost);
+        invoiceRequest.add(item1);
         productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
                 ProductType.STANDARD, new Date());
         quantity = 10;
         totalCost = productData.getPrice()
                                .multiplyBy(quantity);
-        item = new RequestItem(productData, quantity, totalCost);
-        invoiceRequest.add(item);
+        RequestItem item2 = new RequestItem(productData, quantity, totalCost);
+        invoiceRequest.add(item2);
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(
                 new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX"));
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
-        verify(taxPolicy, times(2)).calculateTax(any(), any());
+        verify(taxPolicy, times(1)).calculateTax(item1.getProductData()
+                                                      .getType(),
+                item1.getTotalCost());
+        verify(taxPolicy, times(1)).calculateTax(item2.getProductData()
+                                                      .getType(),
+                item2.getTotalCost());
     }
 
     @Test
@@ -98,7 +104,32 @@ public class BookKeeperTests {
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(
                 new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX"));
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
-        verify(taxPolicy, times(0)).calculateTax(any(), any());
+        verify(taxPolicy, never()).calculateTax(any(), any());
+    }
+
+    @Test
+    public void shouldReturnInvoiceWithProperTax() {
+        ProductData productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
+                ProductType.STANDARD, new Date());
+        int quantity = 20;
+        Money totalCost = productData.getPrice()
+                                     .multiplyBy(quantity);
+        RequestItem item = new RequestItem(productData, quantity, totalCost);
+        invoiceRequest.add(item);
+        Tax tax = new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX");
+        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
+        Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
+        assertThat(invoice.getItems()
+                          .get(0)
+                          .getTax()
+                          .getAmount(),
+                Matchers.is(tax.getAmount()));
+        assertThat(invoice.getItems()
+                          .get(0)
+                          .getTax()
+                          .getDescription(),
+                Matchers.is(tax.getDescription()));
+
     }
 
 }
