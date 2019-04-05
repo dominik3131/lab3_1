@@ -80,4 +80,17 @@ public class AddProductCommandHandlerTests {
         handler.handle(productCommand);
         verify(reservationSpy, times(1)).add(product, 5);
     }
+
+    @Test
+    public void shouldSuggestEquivalentWhenProductIsNotAvailable() {
+        when(clientRepository.load(new Id("1"))).thenReturn(client);
+        when(reservationRepository.load(productCommand.getOrderId())).thenReturn(reservation);
+        when(productRepository.load(productCommand.getProductId())).thenReturn(product);
+        when(suggestionService.suggestEquivalent(product, client)).thenReturn(equivalent);
+        when(product.isAvailable()).thenReturn(false);
+
+        handler.handle(productCommand);
+
+        verify(suggestionService).suggestEquivalent(product, client);
+    }
 }
