@@ -1,5 +1,7 @@
 package lab3_1;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -12,7 +14,6 @@ import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.Date;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -64,11 +65,11 @@ public class BookKeeperTests {
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         assertThat(invoice.getItems()
                           .size(),
-                Matchers.is(1));
+                is(1));
         assertThat(invoice.getItems()
                           .get(0)
                           .getProduct(),
-                Matchers.is(productData));
+                is(productData));
     }
 
     @Test
@@ -123,12 +124,12 @@ public class BookKeeperTests {
                           .get(0)
                           .getTax()
                           .getAmount(),
-                Matchers.is(tax.getAmount()));
+                is(tax.getAmount()));
         assertThat(invoice.getItems()
                           .get(0)
                           .getTax()
                           .getDescription(),
-                Matchers.is(tax.getDescription()));
+                is(tax.getDescription()));
     }
 
     @Test
@@ -138,5 +139,13 @@ public class BookKeeperTests {
         bookKeeper = new BookKeeper(invoiceFactory);
         bookKeeper.issuance(invoiceRequest, taxPolicy);
         verify(invoiceFactory, times(1)).create(any(ClientData.class));
+    }
+
+    @Test
+    public void shouldReturnInvoiceWithProperClientData() {
+        Tax tax = new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX");
+        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
+        Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
+        assertThat(invoice.getClient(), is(equalTo(client)));
     }
 }
