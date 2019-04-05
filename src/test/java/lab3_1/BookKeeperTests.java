@@ -3,6 +3,8 @@ package lab3_1;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -66,6 +68,28 @@ public class BookKeeperTests {
                           .get(0)
                           .getProduct(),
                 Matchers.is(productData));
+    }
+
+    @Test
+    public void ShouldUseCalculateTaxMethodTwoTimesForInvoiceRequestWithTwoPositions() {
+        ProductData productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
+                ProductType.STANDARD, new Date());
+        int quantity = 20;
+        Money totalCost = productData.getPrice()
+                                     .multiplyBy(quantity);
+        RequestItem item = new RequestItem(productData, quantity, totalCost);
+        invoiceRequest.add(item);
+        productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
+                ProductType.STANDARD, new Date());
+        quantity = 10;
+        totalCost = productData.getPrice()
+                               .multiplyBy(quantity);
+        item = new RequestItem(productData, quantity, totalCost);
+        invoiceRequest.add(item);
+        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(
+                new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX"));
+        Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
+        verify(taxPolicy, times(2)).calculateTax(any(), any());
     }
 
 }
