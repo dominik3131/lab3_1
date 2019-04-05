@@ -50,7 +50,7 @@ public class BookKeeperTests {
     }
 
     @Test
-    public void ShouldReturnInvoiceWithOnePosition() {
+    public void shouldReturnInvoiceWithOnePosition() {
         ProductData productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
                 ProductType.STANDARD, new Date());
         int quantity = 20;
@@ -71,7 +71,7 @@ public class BookKeeperTests {
     }
 
     @Test
-    public void ShouldUseCalculateTaxMethodTwoTimesForInvoiceRequestWithTwoPositions() {
+    public void shouldUseCalculateTaxMethodTwoTimesForInvoiceRequestWithTwoPositions() {
         ProductData productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
                 ProductType.STANDARD, new Date());
         int quantity = 20;
@@ -90,6 +90,15 @@ public class BookKeeperTests {
                 new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX"));
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         verify(taxPolicy, times(2)).calculateTax(any(), any());
+    }
+
+    @Test
+    public void shouldUseCalculateTaxMethodZeroTimesForInvoiceRequestWithNoPositions() {
+
+        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(
+                new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX"));
+        Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
+        verify(taxPolicy, times(0)).calculateTax(any(), any());
     }
 
 }
