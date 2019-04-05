@@ -129,7 +129,14 @@ public class BookKeeperTests {
                           .getTax()
                           .getDescription(),
                 Matchers.is(tax.getDescription()));
-
     }
 
+    @Test
+    public void shouldUseCreateMethodOnce() {
+        InvoiceFactory invoiceFactory = mock(InvoiceFactory.class);
+        when(invoiceFactory.create(client)).thenReturn(null);
+        bookKeeper = new BookKeeper(invoiceFactory);
+        bookKeeper.issuance(invoiceRequest, taxPolicy);
+        verify(invoiceFactory, times(1)).create(any(ClientData.class));
+    }
 }
