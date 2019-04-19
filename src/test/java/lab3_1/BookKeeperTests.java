@@ -15,8 +15,16 @@ import java.util.Currency;
 import java.util.Date;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import pl.com.bottega.cqrs.command.builders.BookKeeperBuilder;
+import pl.com.bottega.cqrs.command.builders.ClientDataBuilder;
+import pl.com.bottega.cqrs.command.builders.InvoiceRequestBuilder;
+import pl.com.bottega.cqrs.command.builders.MoneyBuilder;
+import pl.com.bottega.cqrs.command.builders.ProductDataBuilder;
+import pl.com.bottega.cqrs.command.builders.RequestItemBuilder;
+import pl.com.bottega.cqrs.command.builders.TaxBuilder;
 import pl.com.bottega.ecommerce.canonicalmodel.publishedlanguage.ClientData;
 import pl.com.bottega.ecommerce.canonicalmodel.publishedlanguage.Id;
 import pl.com.bottega.ecommerce.sales.domain.invoicing.BookKeeper;
@@ -32,6 +40,14 @@ import pl.com.bottega.ecommerce.sharedkernel.Money;
 
 public class BookKeeperTests {
 
+    private BookKeeperBuilder bookKeeperBuilder;
+    private InvoiceRequestBuilder invoiceRequestBuilder;
+    private ClientDataBuilder clientDataBuilder;
+    private RequestItemBuilder requestItemBuilder;
+    private MoneyBuilder moneyBuilder;
+    private ProductDataBuilder productDataBuilder;
+    private TaxBuilder taxBuilder;
+
     private BookKeeper bookKeeper;
     private TaxPolicy taxPolicy;
     private InvoiceRequest invoiceRequest;
@@ -42,13 +58,27 @@ public class BookKeeperTests {
     private Tax tax;
     private Id id;
 
+    @BeforeClass
+    public void initializeBuilders() {
+        bookKeeperBuilder = new BookKeeperBuilder();
+        invoiceRequestBuilder = new InvoiceRequestBuilder();
+        clientDataBuilder = new ClientDataBuilder();
+        requestItemBuilder = new RequestItemBuilder();
+        moneyBuilder = new MoneyBuilder();
+        productDataBuilder = new ProductDataBuilder();
+        taxBuilder = new TaxBuilder();
+    }
+
     @Before
     public void setUp() {
         taxPolicy = mock(TaxPolicy.class);
         id = Id.generate();
-        client = new ClientData(id, "client");
-        invoiceRequest = new InvoiceRequest(client);
-        bookKeeper = new BookKeeper(new InvoiceFactory());
+        client = clientDataBuilder.name("client")
+                                  .id(id)
+                                  .build();
+        invoiceRequest = invoiceRequestBuilder.clientData(client)
+                                              .build();
+        bookKeeper = bookKeeperBuilder.build();
     }
 
     @Test
