@@ -155,9 +155,13 @@ public class BookKeeperTests {
 
     @Test
     public void shouldUseCalculateTaxMethodZeroTimesForInvoiceRequestWithNoPositions() {
-
-        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(
-                new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX"));
+        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
+                                  .denomination(new BigDecimal(1000))
+                                  .build();
+        Tax tax = taxBuilder.amount(money)
+                            .description("TAX")
+                            .build();
+        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         verify(taxPolicy, never()).calculateTax(any(), any());
     }
