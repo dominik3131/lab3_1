@@ -168,14 +168,24 @@ public class BookKeeperTests {
 
     @Test
     public void shouldReturnInvoiceWithProperTax() {
-        ProductData productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
-                ProductType.STANDARD, new Date());
+        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
+                                  .denomination(new BigDecimal(1000))
+                                  .build();
+        ProductData productData = productDataBuilder.price(money)
+                                                    .name("standard")
+                                                    .type(ProductType.STANDARD)
+                                                    .build();
+
         int quantity = 20;
-        Money totalCost = productData.getPrice()
-                                     .multiplyBy(quantity);
-        RequestItem item = new RequestItem(productData, quantity, totalCost);
+
+        RequestItem item = requestItemBuilder.productData(productData)
+                                             .quantity(quantity)
+                                             .build();
         invoiceRequest.add(item);
-        Tax tax = new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX");
+        money = moneyBuilder.build();
+        Tax tax = taxBuilder.amount(money)
+                            .description("TAX")
+                            .build();
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         assertThat(invoice.getItems()
