@@ -82,18 +82,21 @@ public class BookKeeperTests {
 
     @Test
     public void shouldReturnInvoiceWithOnePosition() {
-        ProductData productData = productDataBuilder.price(new Money(new BigDecimal(1000), Currency.getInstance("EUR")))
+        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
+                                  .denomination(new BigDecimal(1000))
+                                  .build();
+        ProductData productData = productDataBuilder.price(money)
                                                     .name("standard")
                                                     .type(ProductType.STANDARD)
                                                     .build();
         int quantity = 20;
-        Money totalCost = productData.getPrice()
-                                     .multiplyBy(quantity);
+
         RequestItem item = requestItemBuilder.productData(productData)
                                              .quantity(quantity)
                                              .build();
         invoiceRequest.add(item);
-        Tax tax = taxBuilder.amount(new Money(new BigDecimal(1000), Currency.getInstance("EUR")))
+        money = moneyBuilder.build();
+        Tax tax = taxBuilder.amount(money)
                             .description("TAX")
                             .build();
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
@@ -110,22 +113,37 @@ public class BookKeeperTests {
 
     @Test
     public void shouldUseCalculateTaxMethodTwoTimesForInvoiceRequestWithTwoPositions() {
-        ProductData productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
-                ProductType.STANDARD, new Date());
+        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
+                                  .denomination(new BigDecimal(1000))
+                                  .build();
+        ProductData productData = productDataBuilder.price(money)
+                                                    .name("standard")
+                                                    .type(ProductType.STANDARD)
+                                                    .build();
+
         int quantity = 20;
-        Money totalCost = productData.getPrice()
-                                     .multiplyBy(quantity);
-        RequestItem item1 = new RequestItem(productData, quantity, totalCost);
+
+        RequestItem item1 = requestItemBuilder.productData(productData)
+                                              .quantity(quantity)
+                                              .build();
         invoiceRequest.add(item1);
-        productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
-                ProductType.STANDARD, new Date());
+        money = moneyBuilder.build();
+        productData = productDataBuilder.price(money)
+                                        .name("standard")
+                                        .type(ProductType.STANDARD)
+                                        .snapshotDate(new Date())
+                                        .build();
         quantity = 10;
-        totalCost = productData.getPrice()
-                               .multiplyBy(quantity);
-        RequestItem item2 = new RequestItem(productData, quantity, totalCost);
+
+        RequestItem item2 = requestItemBuilder.productData(productData)
+                                              .quantity(quantity)
+                                              .build();
         invoiceRequest.add(item2);
-        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(
-                new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX"));
+        money = moneyBuilder.build();
+        Tax tax = taxBuilder.amount(money)
+                            .description("TAX")
+                            .build();
+        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         verify(taxPolicy, times(1)).calculateTax(item1.getProductData()
                                                       .getType(),
