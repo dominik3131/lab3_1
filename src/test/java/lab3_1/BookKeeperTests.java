@@ -15,7 +15,6 @@ import java.util.Currency;
 import java.util.Date;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import pl.com.bottega.cqrs.command.builders.BookKeeperBuilder;
@@ -58,7 +57,7 @@ public class BookKeeperTests {
     private Tax tax;
     private Id id;
 
-    @BeforeClass
+    @Before
     public void initializeBuilders() {
         bookKeeperBuilder = new BookKeeperBuilder();
         invoiceRequestBuilder = new InvoiceRequestBuilder();
@@ -83,15 +82,22 @@ public class BookKeeperTests {
 
     @Test
     public void shouldReturnInvoiceWithOnePosition() {
-        ProductData productData = new ProductData(Id.generate(), new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "standard",
-                ProductType.STANDARD, new Date());
+        ProductData productData = productDataBuilder.price(new Money(new BigDecimal(1000), Currency.getInstance("EUR")))
+                                                    .name("standard")
+                                                    .type(ProductType.STANDARD)
+                                                    .build();
         int quantity = 20;
         Money totalCost = productData.getPrice()
                                      .multiplyBy(quantity);
-        RequestItem item = new RequestItem(productData, quantity, totalCost);
+        RequestItem item = requestItemBuilder.productData(productData)
+                                             .quantity(quantity)
+                                             .build();
         invoiceRequest.add(item);
-        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(
-                new Tax(new Money(new BigDecimal(1000), Currency.getInstance("EUR")), "TAX"));
+        Tax tax = taxBuilder.amount(new Money(new BigDecimal(1000), Currency.getInstance("EUR")))
+                            .description("TAX")
+                            .build();
+        when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
+
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         assertThat(invoice.getItems()
                           .size(),
