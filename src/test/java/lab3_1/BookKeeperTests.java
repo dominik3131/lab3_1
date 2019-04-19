@@ -204,7 +204,8 @@ public class BookKeeperTests {
     public void shouldUseCreateMethodOnce() {
         InvoiceFactory invoiceFactory = mock(InvoiceFactory.class);
         when(invoiceFactory.create(client)).thenReturn(null);
-        bookKeeper = new BookKeeper(invoiceFactory);
+        bookKeeper = bookKeeperBuilder.factory(invoiceFactory)
+                                      .build();
         bookKeeper.issuance(invoiceRequest, taxPolicy);
         verify(invoiceFactory, times(1)).create(any(ClientData.class));
     }
