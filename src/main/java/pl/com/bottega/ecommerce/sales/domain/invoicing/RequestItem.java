@@ -40,5 +40,4 @@ public class RequestItem {
     public int getQuantity() {
         return quantity;
     }
-
 }

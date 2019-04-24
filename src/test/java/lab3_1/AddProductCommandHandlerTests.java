@@ -53,7 +53,7 @@ public class AddProductCommandHandlerTests {
         suggestionService = mock(SuggestionService.class);
         reservation = new Reservation(Id.generate(), Reservation.ReservationStatus.OPENED, new ClientData(Id.generate(), "Client"),
                 new Date());
-        product = spy(new Product(Id.generate(), new Money(10), "Product", ProductType.STANDARD));
+        product = new Product(Id.generate(), new Money(10), "Product", ProductType.STANDARD);
         equivalent = new Product(Id.generate(), new Money(20), "Equivalent", ProductType.STANDARD);
         reservationSpy = spy(reservation);
         systemContext = new SystemContext();
