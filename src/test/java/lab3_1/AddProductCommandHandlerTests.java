@@ -87,7 +87,7 @@ public class AddProductCommandHandlerTests {
         when(reservationRepository.load(productCommand.getOrderId())).thenReturn(reservation);
         when(productRepository.load(productCommand.getProductId())).thenReturn(product);
         when(suggestionService.suggestEquivalent(product, client)).thenReturn(equivalent);
-        when(product.isAvailable()).thenReturn(false);
+        product.markAsRemoved();
 
         handler.handle(productCommand);
 
