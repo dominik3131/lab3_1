@@ -56,6 +56,8 @@ public class BookKeeperTests {
     private Invoice invoice;
     private Tax tax;
     private Id id;
+    private Money money;
+    private ProductData productData;
 
     @Before
     public void initializeBuilders() {
@@ -78,27 +80,30 @@ public class BookKeeperTests {
         invoiceRequest = invoiceRequestBuilder.clientData(client)
                                               .build();
         bookKeeper = bookKeeperBuilder.build();
+        money = moneyBuilder.currency(Currency.getInstance("EUR"))
+                            .denomination(new BigDecimal(1000))
+                            .build();
+        productData = productDataBuilder.price(money)
+                                        .name("standard")
+                                        .type(ProductType.STANDARD)
+                                        .build();
+        money = moneyBuilder.build();
+        tax = taxBuilder.amount(money)
+                        .description("TAX")
+                        .build();
+
     }
 
     @Test
     public void shouldReturnInvoiceWithOnePosition() {
-        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
-                                  .denomination(new BigDecimal(1000))
-                                  .build();
-        ProductData productData = productDataBuilder.price(money)
-                                                    .name("standard")
-                                                    .type(ProductType.STANDARD)
-                                                    .build();
+
         int quantity = 20;
 
         RequestItem item = requestItemBuilder.productData(productData)
                                              .quantity(quantity)
                                              .build();
         invoiceRequest.add(item);
-        money = moneyBuilder.build();
-        Tax tax = taxBuilder.amount(money)
-                            .description("TAX")
-                            .build();
+
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
 
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
@@ -113,14 +118,6 @@ public class BookKeeperTests {
 
     @Test
     public void shouldUseCalculateTaxMethodTwoTimesForInvoiceRequestWithTwoPositions() {
-        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
-                                  .denomination(new BigDecimal(1000))
-                                  .build();
-        ProductData productData = productDataBuilder.price(money)
-                                                    .name("standard")
-                                                    .type(ProductType.STANDARD)
-                                                    .build();
-
         int quantity = 20;
 
         RequestItem item1 = requestItemBuilder.productData(productData)
@@ -128,10 +125,7 @@ public class BookKeeperTests {
                                               .build();
         invoiceRequest.add(item1);
         money = moneyBuilder.build();
-        productData = productDataBuilder.price(money)
-                                        .name("standard")
-                                        .type(ProductType.STANDARD)
-                                        .snapshotDate(new Date())
+        productData = productDataBuilder.snapshotDate(new Date())
                                         .build();
         quantity = 10;
 
@@ -139,10 +133,6 @@ public class BookKeeperTests {
                                               .quantity(quantity)
                                               .build();
         invoiceRequest.add(item2);
-        money = moneyBuilder.build();
-        Tax tax = taxBuilder.amount(money)
-                            .description("TAX")
-                            .build();
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         verify(taxPolicy, times(1)).calculateTax(item1.getProductData()
@@ -155,12 +145,6 @@ public class BookKeeperTests {
 
     @Test
     public void shouldUseCalculateTaxMethodZeroTimesForInvoiceRequestWithNoPositions() {
-        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
-                                  .denomination(new BigDecimal(1000))
-                                  .build();
-        Tax tax = taxBuilder.amount(money)
-                            .description("TAX")
-                            .build();
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         verify(taxPolicy, never()).calculateTax(any(), any());
@@ -168,24 +152,12 @@ public class BookKeeperTests {
 
     @Test
     public void shouldReturnInvoiceWithProperTax() {
-        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
-                                  .denomination(new BigDecimal(1000))
-                                  .build();
-        ProductData productData = productDataBuilder.price(money)
-                                                    .name("standard")
-                                                    .type(ProductType.STANDARD)
-                                                    .build();
-
         int quantity = 20;
 
         RequestItem item = requestItemBuilder.productData(productData)
                                              .quantity(quantity)
                                              .build();
         invoiceRequest.add(item);
-        money = moneyBuilder.build();
-        Tax tax = taxBuilder.amount(money)
-                            .description("TAX")
-                            .build();
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         assertThat(invoice.getItems()
@@ -212,12 +184,6 @@ public class BookKeeperTests {
 
     @Test
     public void shouldReturnInvoiceWithProperClientData() {
-        Money money = moneyBuilder.currency(Currency.getInstance("EUR"))
-                                  .denomination(new BigDecimal(9999))
-                                  .build();
-        Tax tax = taxBuilder.amount(money)
-                            .description("TAX")
-                            .build();
         when(taxPolicy.calculateTax(any(ProductType.class), any(Money.class))).thenReturn(tax);
         Invoice invoice = bookKeeper.issuance(invoiceRequest, taxPolicy);
         assertThat(invoice.getClient(), is(equalTo(client)));
